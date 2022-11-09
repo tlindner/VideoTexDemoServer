@@ -5,6 +5,8 @@
 
 import socket
 import random
+import time
+from PIL import Image
 
 HOST = "127.0.0.1"	# Standard loopback interface address (localhost)
 PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
@@ -59,7 +61,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				if not data:
 					break
 		
-				if data == b'\r':
+				print ("got data with echo: " + data.hex())
+				
+				if data == b'\x11':
+					print("Eat $11")
+				elif data == b'\r':
 					mode = next_mode
 					conn.sendall(b"\r\n")
 					# change cursor back to blue
@@ -79,7 +85,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				elif input == b"2":
 					mode = 8
 				elif input == b"3":
-					mode = 1
+					mode = 10
 				elif input == b"4":
 					mode = 1
 				elif input == b"5":
@@ -119,7 +125,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				if not data:
 					break
 		
-				if data == b'\r':
+				print ("got data without echo: " + data.hex())
+
+				if data == b'\x11':
+					print ("Eating $11")
+				elif data == b'\r':
 					mode = next_mode
 				elif data == b'\b':
 					input = input[:-1]
@@ -147,8 +157,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				
 				for i in range(int(input)):
 					conn.sendall(b"\x1b\x59")
-					x = 0x20 + random.randrange(30)
-					y = 0x20 + random.randrange(13)
+					x = 0x20 + random.randrange(31)
+					y = 0x20 + random.randrange(14)
 					c = 128 + random.randrange(127)
 					conn.sendall(bytes(chr(y),'latin_1'))
 					conn.sendall(bytes(chr(x),'latin_1'))
@@ -168,6 +178,78 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				mode = 2
 				input = b""
 				next_mode = 1
+			
+			# describe graphics mode
+			if mode == 10:
+				conn.sendall(b"\r\nPress <enter> to view medium graphics")
+				conn.sendall(b"\r\nAfter two minutes, the menu will reappear")
+				mode = 2
+				input = b""
+				next_mode = 11
+			
+			# draw medium graphics
+			if mode == 11:
+				# put in medium graphics mode
+				conn.sendall(b"\x1b\x47\x4d")
+				
+
+				im = Image.open('image.jpg')
+				im = im.resize((128,96), 0)
+				im = im.convert('L')
+								
+				h = 0
+				v = 0
+				
+				black = 0
+				white = 0
+				
+				print ("start sendign image")
+				while v < 96:
+					while h < 128:
+						# count contiguous black pixels
+						while h < 128:
+							a = im.getpixel((h,v))
+							if a >= 128:
+								black = black + 1
+							else:
+								break;
+					
+							h = h + 1
+				
+						# count contiguous white pixels
+						
+						while h < 128:
+							a = im.getpixel((h,v))
+							if a < 128:
+								white = white + 1
+							else:
+								break;
+					
+							h = h + 1
+				
+						conn.sendall(bytes(chr(0x20+black),'latin_1'))
+						conn.sendall(bytes(chr(0x20+white),'latin_1'))
+						black = 0
+						white = 0
+				
+					v = v + 1
+					h = 0
+				
+				time.sleep(120)
+				mode = 12
+				input = b""
+				next_mode = 1
+			
+			# go back to alpha screen and display main menu
+			if mode == 12:
+				# put in alpha only mode
+				conn.sendall(b"\x1b\x47\x4e")
+				conn.sendall(b"\x1b\x6a")
+				mode = 1
+				
+					
+
+			
 					
 					
 					
