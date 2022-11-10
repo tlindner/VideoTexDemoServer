@@ -7,6 +7,7 @@ import socket
 import random
 import time
 from PIL import Image
+import glob
 
 HOST = "127.0.0.1"	# Standard loopback interface address (localhost)
 PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
@@ -60,11 +61,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				data = conn.recv(1024)
 				if not data:
 					break
-		
-				print ("got data with echo: " + data.hex())
-				
+
 				if data == b'\x11':
-					print("Eat $11")
+
 				elif data == b'\r':
 					mode = next_mode
 					conn.sendall(b"\r\n")
@@ -124,11 +123,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				data = conn.recv(1024)
 				if not data:
 					break
-		
-				print ("got data without echo: " + data.hex())
 
 				if data == b'\x11':
-					print ("Eating $11")
+
 				elif data == b'\r':
 					mode = next_mode
 				elif data == b'\b':
@@ -181,71 +178,91 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 			
 			# describe graphics mode
 			if mode == 10:
-				conn.sendall(b"\r\nPress <enter> to view medium graphics")
-				conn.sendall(b"\r\nAfter two minutes, the menu will reappear")
+				# get list of files
+				imageFiles = []
+				for file in glob.glob("*.jpg"):
+					imageFiles.append(file)
+				
+				conn.sendall(b"\r\nList of avaiable files:")
+				i = 1
+				for file in imageFiles:
+					conn.sendall(b"\r\n")
+					conn.sendall(bytes(str(i)+" ",'latin_1'))
+					conn.sendall(bytes(file,'latin_1'))
+					i = i + 1
+					
+				conn.sendall(b"\r\nChoose file by number: ")
 				mode = 2
 				input = b""
 				next_mode = 11
 			
 			# draw medium graphics
 			if mode == 11:
-				# put in medium graphics mode
-				conn.sendall(b"\x1b\x47\x4d")
+				# get list of files
+				imageFiles = []
+				for file in glob.glob("*.jpg"):
+					imageFiles.append(file)
+				
+				imageNumber = int(input) - 1
+				
+				if imageNumber < len(imageFiles):
+					# put in medium graphics mode
+					conn.sendall(b"\x1b\x47\x4d")
+				
+					im = Image.open(imageFiles[imageNumber])
+					im = im.resize((128,96), 0)
+					im = im.convert('1')
+								
+					h = 0
+					v = 0
+				
+					black = 0
+					white = 0
+
+					while v < 96:
+						while h < 128:
+							# count contiguous black pixels
+							while h < 128:
+								a = im.getpixel((h,v))
+								if a < 128:
+									black = black + 1
+								else:
+									break;
+					
+								h = h + 1
+				
+							# count contiguous white pixels
+						
+							while h < 128:
+								a = im.getpixel((h,v))
+								if a >= 128:
+									white = white + 1
+								else:
+									break;
+					
+								h = h + 1
+				
+							conn.sendall(bytes(chr(0x20+black),'latin_1'))
+							conn.sendall(bytes(chr(0x20+white),'latin_1'))
+							black = 0
+							white = 0
+				
+						v = v + 1
+						h = 0
+				
+					time.sleep(120)
+					mode = 12
+					input = b""
+					next_mode = 1
+				else:
+					conn.sendall(b"\r\nFile not found")
+					conn.sendall(b"\r\nPress <enter> to continue")
+					mode = 2
+					input = b""
+					next_mode = 1
 				
 
-				im = Image.open('image.jpg')
-				im = im.resize((128,96), 0)
-				im = im.convert('L')
-								
-				h = 0
-				v = 0
-				
-				black = 0
-				white = 0
-				
-				print ("start sendign image")
-				while v < 96:
-					while h < 128:
-						# count contiguous black pixels
-						while h < 128:
-							a = im.getpixel((h,v))
-							if a >= 128:
-								black = black + 1
-							else:
-								break;
-					
-							h = h + 1
-				
-						# count contiguous white pixels
-						
-						while h < 128:
-							a = im.getpixel((h,v))
-							if a < 128:
-								white = white + 1
-							else:
-								break;
-					
-							h = h + 1
-				
-						conn.sendall(bytes(chr(0x20+black),'latin_1'))
-						conn.sendall(bytes(chr(0x20+white),'latin_1'))
-						black = 0
-						white = 0
-				
-					v = v + 1
-					h = 0
-				
-				time.sleep(120)
-				mode = 12
-				input = b""
-				next_mode = 1
-			
-			# go back to alpha screen and display main menu
-			if mode == 12:
-				# put in alpha only mode
-				conn.sendall(b"\x1b\x47\x4e")
-				conn.sendall(b"\x1b\x6a")
-				mode = 1
+
 				
 					
 
