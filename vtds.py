@@ -63,7 +63,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 					break
 
 				if data == b'\x11':
-
+					# eat this byte
+					pass
 				elif data == b'\r':
 					mode = next_mode
 					conn.sendall(b"\r\n")
@@ -125,7 +126,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 					break
 
 				if data == b'\x11':
-
+					pass
 				elif data == b'\r':
 					mode = next_mode
 				elif data == b'\b':
