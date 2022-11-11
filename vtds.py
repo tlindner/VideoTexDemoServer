@@ -251,8 +251,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 						v = v + 1
 						h = 0
 				
-					time.sleep(120)
-					mode = 12
+					conn.sendall(b"\x1b\x47\x4e")
+					conn.sendall(b"\r\nPress <enter> to continue")
+					mode = 6
 					input = b""
 					next_mode = 1
 				else:
