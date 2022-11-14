@@ -15,13 +15,13 @@ It will display the port number it has opened a listening socket on.
 Other Files
 ===========
 
-lorem.txt: sample text used by the server
-pick.jpg: Sample image used by the server
-woman.jpg: Sample image used by the server
-pick.jpg: Sample image used by the server
-keyscn2.asm: Source to keyboard scan program the server can send to the machine
-keyscn2.bin: Assembled binary of keyscn2.asm
-build.sh: Build script for keyscn2.asm
+- lorem.txt: sample text used by the server
+- pick.jpg: Sample image used by the server
+- woman.jpg: Sample image used by the server
+- pick.jpg: Sample image used by the server
+- keyscn2.asm: Source to keyboard scan program the server can send to the machine
+- keyscn2.bin: Assembled binary of keyscn2.asm
+- build.sh: Build script for keyscn2.asm
 
 
 --
