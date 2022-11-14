@@ -7,6 +7,7 @@ import socket
 import random
 import time
 from PIL import Image
+from pathlib import Path
 import glob
 
 def sendAll_print(data):
@@ -106,7 +107,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				data = conn.recv(1024)
 				if not data:
 					break
-                
+
 				for char in data:
 					if char < 0x20:
 						print("in: " + hex(char))
@@ -140,7 +141,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				elif input == b"4":
 					mode = 12
 				elif input == b"5":
-					mode = 1 #not implememnted
+					mode = 16
 				elif input == b"6":
 					break;
 				else:
@@ -154,7 +155,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				mode = 2
 			
 			if mode == 5:
-				from pathlib import Path
 				fd = Path('lorem.txt').read_text()
 				
 				count = int(input)
@@ -353,6 +353,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 					break
 				
 				if data != b'\x10':
+					print("Error: Acknowledge not recieved\n")
 					conn.sendall(b"\r\nError: Acknowledge not recieved")
 					mode = 1
 					continue
@@ -362,6 +363,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 					break
 				
 				if data != global_block_number:
+					print("Error: Wrong block received.\n")
 					conn.sendall(b"\r\nError: Wrong block received.")
 					mode = 1
 					continue
@@ -426,10 +428,53 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 				conn.sendall(b"\r\nData recieved. Length: " + bytes(str(len(input)), 'latin_1'))
 				mode = 1
 				continue
-				
-					
+			
+			# Send binary program to terminal
+			if mode == 16:
+				# create block header to send binary starting at $E00
+				bProtocol = b"\x10B" + global_block_number + b"B\x10\x40\x10\x4e"
 
+				with open('keyscn2.bin', mode='rb') as file:
+					fileContent = file.read()
+				
+				# add object code to block (follow transparency rule)
+				for byte in fileContent:
+					if byte < 0x40:
+						bProtocol = bProtocol + bytes(chr(0x10),'latin_1')
+						bProtocol = bProtocol + bytes(chr(byte+0x40),'latin_1')
+					else:
+						bProtocol = bProtocol + bytes(chr(byte),'latin_1')
+				
+				# end block with <ETX>
+				bProtocol = bProtocol + b'0x03'
+
+				checksum = calcChecksum(bProtocol)
+				sendAll_print(bProtocol)
+				sendAll_print(checksum)
+				
+				# wait for ACK
+				mode = 14
+				next_mode = 17
+				continue
+			
+			# execute program at $E00
+			if mode == 17:
+				# create block header
+				bProtocol = b"\x10B" + global_block_number + b"G\x10\x40\x10\x4e\x03"
+				checksum = calcChecksum(bProtocol)
+				
+				# send it
+				sendAll_print(bProtocol)
+				sendAll_print(checksum)
+				
+				# wait for ACK
+				mode = 14
+				next_mode = 18
+				continue
+					
+			# stop server
+			if mode == 18:
+				break;
 					
 					
 					
-  					
