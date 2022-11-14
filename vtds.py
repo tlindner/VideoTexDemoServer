@@ -416,6 +416,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 					mode = 1
 					continue
 				
+				f = open("block_read.txt","wb")
+				f.write(input)
+				f.close()
+				
 				# send ASCII ACK
 				conn.sendall(b"\x10"+global_block_number)
 				
