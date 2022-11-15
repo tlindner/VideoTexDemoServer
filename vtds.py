@@ -429,8 +429,17 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 mode = 1
                 continue
             
-            # Send binary program to terminal
+            # prepare to send binary to computer
             if mode == 16:
+                conn.sendall(b"\r\nThis will send a machine language program to you device.")
+                conn.sendall(b"\r\nIt takes about 30 seconds.")
+                conn.sendall(b"\r\nPress <enter> to begin.")
+                mode = 2
+                next_mode = 17
+                continue
+              
+            # Send binary program to terminal
+            if mode == 17:
                 # create block header to send binary starting at $E00
                 bProtocol = b"\x10B" + global_block_number + b"B\x10\x40\x10\x4e"
 
@@ -450,34 +459,17 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
                 checksum = calcChecksum(bProtocol)
                 sendAll_print(bProtocol)
-                print("send checksum")
-                sendAll_print(checksum)
-                
-                print("done sending program")
-                # wait for ACK
-                mode = 14
-                next_mode = 17
-                continue
-            
-            # Tell VideoTex to display page 1
-            if mode == 17:
-                # create block header
-                bProtocol = b"\x10B" + global_block_number + b"D1\x03"
-                checksum = calcChecksum(bProtocol)
-                
-                # send it
-                sendAll_print(bProtocol)
                 sendAll_print(checksum)
                 
                 # wait for ACK
                 mode = 14
                 next_mode = 18
                 continue
-                    
-            # Tell video text to display page 2
+            
+            # Tell VideoTex to display page 1
             if mode == 18:
                 # create block header
-                bProtocol = b"\x10B" + global_block_number + b"D2\x03"
+                bProtocol = b"\x10B" + global_block_number + b"D1\x03"
                 checksum = calcChecksum(bProtocol)
                 
                 # send it
@@ -489,8 +481,23 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 next_mode = 19
                 continue
                     
-            # execute program at $E00
+            # Tell video text to display page 2
             if mode == 19:
+                # create block header
+                bProtocol = b"\x10B" + global_block_number + b"D2\x03"
+                checksum = calcChecksum(bProtocol)
+                
+                # send it
+                sendAll_print(bProtocol)
+                sendAll_print(checksum)
+                
+                # wait for ACK
+                mode = 14
+                next_mode = 20
+                continue
+                    
+            # execute program at $E00
+            if mode == 20:
                 # create block header
                 bProtocol = b"\x10B" + global_block_number + b"G\x10\x40\x10\x4e\x03"
                 checksum = calcChecksum(bProtocol)

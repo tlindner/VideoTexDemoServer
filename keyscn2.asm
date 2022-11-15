@@ -28,8 +28,8 @@
 VIDRAM:     equ   $0400       ; start of video memory
 JOYBUF:     equ   $0400       ; just store stuff on the screen for now
 KEYBUF:     equ   $0401       ; just store more on the screen for now
-PIA0AD:     equ   $FF00       ; PIA0 port A data = keyboard row inputs
-PIA0BD:     equ   $FF02       ; PIA0 port B data = keyboard column strobe out
+PIA0AD:     equ   $FF1C       ; PIA0 port A data = keyboard row inputs
+PIA0BD:     equ   $FF1E       ; PIA0 port B data = keyboard column strobe out
 RESET:      equ   $FFFE       ; Address of MPU Reset Vector
 VECCOCO:    equ   $A027       ; CoCo 1/2 reset vector value
 VECDRGN:    equ   $B3B4       ; Dragon32/64 reset vector value
@@ -51,6 +51,7 @@ KEY_SHIFT:  equ   55
 
             org   $0E00       ; some place to live
 INIT:       
+            orcc #$AF
             bsr   CLS         ; clear screen
             ldx   RESET       ; Get RESET vector
             cmpx  #VECDRGN    ; if Dragon
