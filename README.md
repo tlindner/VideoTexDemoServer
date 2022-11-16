@@ -29,6 +29,11 @@ Other Files
 - keyscn2.bin: Assembled binary of keyscn2.asm
 - build.sh: Build script for keyscn2.asm
 
+Known problems
+==============
+
+1. Trying to retrieve text a second time in the same session will fail. But the third time will work.
+2. Changing the cursor graphic doesn't see to work.
 
 --
 tim lindner
