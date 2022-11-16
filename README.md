@@ -35,6 +35,10 @@ Known problems
 1. Trying to retrieve text a second time in the same session will fail. But the third time will work.
 2. Changing the cursor graphic doesn't see to work.
 
+Documentation
+=============
+https://colorcomputerarchive.com/search?q=videotex
+
 --
 tim lindner
 tlindner@macmess.org
