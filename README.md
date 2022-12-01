@@ -34,6 +34,7 @@ Known problems
 
 1. Trying to retrieve text a second time in the same session will fail. But the third time will work.
 2. Changing the cursor graphic doesn't see to work.
+3. The server does not implement block retry.
 
 Documentation
 =============
